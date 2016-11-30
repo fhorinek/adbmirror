@@ -6,7 +6,7 @@ I am using this to integrate screencast to my car display using OrangePiPC.
 It can be used with any linux PC or SBC (RaspberryPi, BabananaPi, *Pi, ...)
 
 I am using binaries from [openstf](https://github.com/openstf)
-to stream screen and to emulate touch. Great projet!
+to stream screen and to emulate touch. Great project!
 
 ## Running
 You will need adb, python2.7 and python-pygame to run the application
@@ -46,5 +46,4 @@ You can rebuild openstf binaries using script `./build-binaries.sh`
 If you want to rebuild **RotationWatcher.apk** follow the instructions inside the submodule
 
 ## Common problems
-Xiaomi phones might want to have additional permission 
-**USB debugging (Security setting)** for 
+ * Xiaomi phones might want to have additional permission **USB debugging (Security setting)** for 
