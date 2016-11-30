@@ -8,6 +8,10 @@ It can be used with any linux PC or SBC (RaspberryPi, BabananaPi, *Pi, ...)
 I am using binaries from [openstf](https://github.com/openstf)
 to stream screen and to emulate touch. Great project!
 
+## Demo
+
+https://www.youtube.com/watch?v=tdfUAGuk7k0
+
 ## Running
 You will need adb, python2.7 and python-pygame to run the application
 
