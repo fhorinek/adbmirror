@@ -12,17 +12,10 @@ class TouchClient(MyThread):
         cmd = ["adb", "shell", " %s/minitouch" % (parent.path)]
         self.server = Popen(cmd)
         
-        sleep(2)
-        
         self.pressure = 0
         self.max_x = 0
         self.max_y = 0
 
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("localhost", 1111))
-        self.socket.setblocking(0)
-        
-     
     def cut_data(self, size):
         tmp = self.data[:size]
         self.data = self.data[size:]
@@ -33,15 +26,18 @@ class TouchClient(MyThread):
         self.socket.sendall(data)
         
     def run(self):
-        self.running = True
+        sleep(1)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(("localhost", 1111))
+        self.socket.setblocking(0)
         
+        self.running = True
         self.data = ""
     
         while self.running:
             for msg in self.internal_read():
                 cmd = msg[0]
                 if cmd == "end":
-                    self.server.kill()
                     self.running = False
 
                 if cmd == "down":
@@ -81,3 +77,4 @@ class TouchClient(MyThread):
                     self.pressure = int(data[4])
             
         self.socket.close()
+        self.server.kill()

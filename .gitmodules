@@ -4,3 +4,6 @@
 [submodule "minicap"]
 	path = minicap
 	url = https://github.com/openstf/minicap.git
+[submodule "RotationWatcher.apk"]
+	path = RotationWatcher.apk
+	url = https://github.com/openstf/RotationWatcher.apk.git

@@ -23,19 +23,18 @@ class CapClient(MyThread):
         args = "-P %ux%u@%ux%u/0" % (dev_max, dev_max, disp_max, disp_max)
         cmd = ["adb", "shell", "LD_LIBRARY_PATH=%s %s/minicap %s" % (parent.path, parent.path, args)]
         self.server = Popen(cmd)
-        
-        sleep(2)
-
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("localhost", 1313))
-        self.socket.setblocking(0)
-     
+      
     def cut_data(self, size):
         tmp = self.data[:size]
         self.data = self.data[size:] 
         return tmp
         
     def run(self):
+        sleep(1)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(("localhost", 1313))
+        self.socket.setblocking(0)        
+        
         self.running = True
         self.state = BANNER
         
@@ -45,7 +44,6 @@ class CapClient(MyThread):
             for msg in self.internal_read():
                 cmd = msg[0]
                 if cmd == "end":
-                    self.server.kill()
                     self.running = False
         
             try:
@@ -77,3 +75,4 @@ class CapClient(MyThread):
                     
             
         self.socket.close()
+        self.server.kill()

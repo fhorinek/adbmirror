@@ -58,6 +58,11 @@ adb push $tmp_dir $dev_dir
 #clear tmp
 rm -rf $tmp_dir
 
+if ! adb shell pm list packages | grep jp.co.cyberagent.stf.rotationwatcher > /dev/null; then
+    echo " * Installing RotationWatcher.apk"
+    adb install bin/RotationWatcher.apk
+fi
+
 echo " * Forwarding ports"
 adb forward tcp:1313 localabstract:minicap
 adb forward tcp:1111 localabstract:minitouch

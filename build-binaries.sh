@@ -35,7 +35,10 @@ cd ..
 echo
 
 echo " * Moving binaries *"
-rm -rf adbmirror/bin/*
+rm -rf adbmirror/bin/minicap
+rm -rf adbmirror/bin/minicap-shared
+rm -rf adbmirror/bin/minitouch
+
 cp -r minicap/libs adbmirror/bin/minicap
 cp -r minicap/jni/minicap-shared/aosp/libs adbmirror/bin/minicap-shared
 cp -r minitouch/libs adbmirror/bin/minitouch

@@ -22,10 +22,30 @@ adbmirror contains all necesery files to run the application, no compilation req
 3. Approve usb debugging for your computer.
 4. Enjoy! 
 
+## How it works
+* start.sh - startup script
+ * check device for SDK, ABI, REL and device resolution
+ * push minicap and minitouch binaries
+ * install RotationWatcher.apk if it is needed
+ * forward ports from device to localhost
+ * start GUI - graphical interface, thread manager
+  * spawn capclient thread - read from minicap using socket
+   * run minicap on device via adb
+  * spawn touchclient thread - write to minitouch using socket
+   * run minitouch on device via adb
+  * spawn rotclient thread - read rotation using stdin
+   * exec RotationWatcher.adb on device via adb
+ * Remove binaries from device
+
+The GUI runs as main process. 
+* It spawns capclient thread, which will spawn minicap 
+
 ## Build
 There are precompiled binaries adbmirror/bin so this is not necessary. 
  
 You can rebuild openstf binaries using script `./build-binaries.sh`
+
+If you want to rebuild **RotationWatcher.apk** follow the instructions inside the submodule
 
 ## Common problems
 Xiaomi phones might want to have additional permission 

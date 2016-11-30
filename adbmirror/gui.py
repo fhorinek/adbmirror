@@ -4,6 +4,7 @@ import sys
 
 from capclient import CapClient
 from touchclient import TouchClient
+from rotationclient import RotationClient
 
 class Main():
     def __init__(self):
@@ -33,6 +34,9 @@ class Main():
         self.touch = TouchClient(self)
         self.touch.start()
         
+        self.rot = RotationClient()
+        self.rot.start()
+        
         self.mouse_down = False
 
         
@@ -42,47 +46,75 @@ class Main():
                 self.running = False
                 self.cap.write(["end"])
                 self.touch.write(["end"])
+                self.rot.write(["end"])
                
                
             if hasattr(event, "pos"):
                 ix, iy = event.pos
-                if self.landscape:
+                if self.rotation == 90:
                     y = (ix / float(self.size[0]))
                     if self.scalel:
                         x = 1.0 - (iy / float(self.size[1]))
                     else:
                         x = 1.0 - (((iy - self.yl)) / float(self.sizel[1]))
 
-                else:
+                if self.rotation == 270:
+                    y = 1.0 - (ix / float(self.size[0]))
+                    if self.scalel:
+                        x = (iy / float(self.size[1]))
+                    else:
+                        x = (((iy - self.yl)) / float(self.sizel[1]))
+
+                if self.rotation == 0:
                     y = iy / float(self.size[1])
                     if self.scalep:
                         x = ix  / float(self.size[0])
                     else:
                         x = ((ix - self.xp)) / float(self.sizep[0])
+
+                if self.rotation == 180:
+                    y = 1.0 - (iy / float(self.size[1]))
+                    if self.scalep:
+                        x = 1.0 - (ix  / float(self.size[0]))
+                    else:
+                        x = 1.0 - (((ix - self.xp)) / float(self.sizep[0]))
                            
                 x = min(max(0, x), 1)
                 y = min(max(0, y), 1)
 #                 print x, y
-                
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.touch.write(["down", x, y])
-                self.mouse_down = True
             
-            if event.type == pygame.MOUSEBUTTONUP:
-                self.touch.write(["up"])
-                self.mouse_down = False
-
+            if hasattr(event, "button"):
+                if event.button is not 1:
+                    continue
+                  
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.touch.write(["down", x, y])
+                    self.mouse_down = True
+                
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.touch.write(["up"])
+                    self.mouse_down = False
+    
             if event.type == pygame.MOUSEMOTION:
                 if self.mouse_down:
                     self.touch.write(["move", x, y])
+                    
+#             if event.type == pygame.
             
         
     def run(self):
         self.running = True
         self.landscape = None
+        self.rotation = 0
         
         while self.running:
             self.events()
+ 
+            for msg in self.rot.read():
+                cmd = msg[0]
+                if cmd == "rot":
+                    self.rotation = msg[1]
+                    self.screen.fill((0, 0, 0))
             
             for msg in self.cap.read():
                 cmd = msg[0]
@@ -92,12 +124,10 @@ class Main():
                 if cmd == "data":
                     data = cStringIO.StringIO(msg[1])
                     a = pygame.image.load(data)
-                    landscape = sum(a.get_at((self.size[1] + 10, self.size[0] / 2))) > sum(a.get_at((self.size[0] / 2, self.size[1] + 10)))
-                    if self.landscape is not landscape:
-                        self.landscape = landscape
-                        self.screen.fill((0, 0, 0))
+                    
+                    landscape = self.rotation in [90, 270]
 
-                    if self.landscape:       
+                    if landscape:       
                         if self.scalel:
                             a = a.subsurface(pygame.Rect((0,0), self.sizel))
                             a = pygame.transform.smoothscale(a, self.size)
