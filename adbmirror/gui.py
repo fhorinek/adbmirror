@@ -15,17 +15,18 @@ MENU_WIDTH = 15
 
 NAV_WIDTH = 7
 
+DOUBLECLICK_TIME = 0.2
+
 class Main():
     def __init__(self):
         assert len(sys.argv) == 4
         self.size = map(int, sys.argv[1].split("x"))
-        self.proj = list(self.size)
         orig = map(int, sys.argv[2].split("x"))
         self.orig = orig[1], orig[0]
         self.path = sys.argv[3]
         
         self.scalel = True
-        self.scalep = True
+        self.scalep = False
         
         self.cap = CapClient(self)
         self.cap.start()
@@ -40,13 +41,23 @@ class Main():
         self.adb.start()
         
         self.mouse_down = False
-        self.mouse_down_time = 0
+        self.mouse_time = 0
         self.mouse_inmenu = False
         
         self.show_menu = False
         self.show_menu_time = 0
 
         self.show_nav = False
+
+        #image scale orig to disp
+        self.scale = self.orig[0] / float(self.size[0])
+        self.ratio = self.orig[0] / float(self.orig[1])
+        #size of raw image in landscape mode
+        self.sizel = self.size[0], int(self.orig[1] / self.scale)
+        #size of raw image in portrait mode
+        self.sizep = int(self.orig[1] / self.scale), self.size[0]
+
+        self.rotation = 0
 
         self.calc_scale()
 
@@ -84,20 +95,34 @@ class Main():
         self.blit_center(self.img_nav, img_back, (0, self.menu_h * 2, self.nav_w, self.menu_h))
 
     def calc_scale(self):
-        if self.show_nav:
-            self.proj[0] = self.size[0] - self.nav_w
-        else:
-            self.proj[0] = self.size[0]
-
-    
-        m = self.orig[0] / float(self.size[0])
-        self.sizel = self.size[0], int(self.orig[1] / m)
-        self.sizep = int(self.orig[1] / m), self.size[0]
-
-        #landscape
-        self.ly = int((self.size[1] - self.sizel[1]) / 2)
+        self.landscape = self.rotation in [90, 270]
         
-
+        if self.show_nav:
+            max_w = self.size[0] - self.nav_w      
+        else:            
+            max_w = self.size[0]
+ 
+        if self.landscape:
+            x = 0
+            w = max_w 
+            if self.scalel:
+                h = self.size[1]
+                y = 0
+            else:
+                h = w / self.ratio
+                y = (self.size[1] - h) / 2
+        else:
+            y = 0
+            h = self.size[1]
+            if self.scalep:
+                x = 0
+                w = max_w
+            else:
+                w = h / self.ratio
+                x = (self.size[0] - w) / 2
+                
+        self.proj = map(int, [x, y, w, h]) 
+        self.frame_update = True
         
     def blit_center(self, dst, src, rect):
         x = rect[0] - int((src.get_width() / 2) - (rect[2] / 2))
@@ -119,37 +144,24 @@ class Main():
                 ix, iy = event.pos
                 self.mouse_inmenu = ix <= self.size[1] * MENU_BORDER / 100.0
                 
-                if self.rotation == 90:
-                    y = (ix / float(self.size[0]))
-                    if self.scalel:
-                        x = 1.0 - (iy / float(self.size[1]))
-                    else:
-                        x = 1.0 - (((iy - self.yl)) / float(self.sizel[1]))
-
-                if self.rotation == 270:
-                    y = 1.0 - (ix / float(self.size[0]))
-                    if self.scalel:
-                        x = (iy / float(self.size[1]))
-                    else:
-                        x = (((iy - self.yl)) / float(self.sizel[1]))
+                fx = min(max(0, (ix - self.proj[0]) / float(self.proj[2])), 1)
+                fy = min(max(0, (iy - self.proj[1]) / float(self.proj[3])), 1)
 
                 if self.rotation == 0:
-                    y = iy / float(self.size[1])
-                    if self.scalep:
-                        x = ix  / float(self.size[0])
-                    else:
-                        x = ((ix - self.xp)) / float(self.sizep[0])
+                    x = fx
+                    y = fy
 
+                if self.rotation == 90:
+                    x = 1.0 - fy
+                    y = fx
+                    
                 if self.rotation == 180:
-                    y = 1.0 - (iy / float(self.size[1]))
-                    if self.scalep:
-                        x = 1.0 - (ix  / float(self.size[0]))
-                    else:
-                        x = 1.0 - (((ix - self.xp)) / float(self.sizep[0]))
-                           
-                x = min(max(0, x), 1)
-                y = min(max(0, y), 1)
-                print x, y
+                    x = 1.0 - fx
+                    y = 1.0 - fy   
+                
+                if self.rotation == 270:
+                    x = fy
+                    y = 1.0 - fx                                 
             
             if hasattr(event, "button"):
                 if event.button is not 1:
@@ -163,12 +175,12 @@ class Main():
                     else:
                         self.touch.write(["down", x, y])
                         self.mouse_down = True
-                        self.mouse_down_time = time()
+                        self.mouse_time = time()
                 
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.touch.write(["up"])
                     self.mouse_down = False
-    
+   
             if event.type == pygame.MOUSEMOTION:
                 if self.mouse_down:
                     self.touch.write(["move", x, y])
@@ -194,11 +206,9 @@ class Main():
 
             
         self.show_menu = False
-        self.screen_update = True        
-    
           
     def menu_loop(self):
-        if self.mouse_down and time() - self.mouse_down_time > MENU_TAP and self.mouse_inmenu:
+        if self.mouse_down and time() - self.mouse_time > MENU_TAP and self.mouse_inmenu:
             self.show_menu = True
             self.screen_update = True
             self.show_menu_time = time()
@@ -206,15 +216,16 @@ class Main():
         if self.show_menu and time() - self.show_menu_time > MENU_TIMEOUT:
             self.show_menu = False
             self.screen_update = True
-        
-        
+    
     def run(self):
         self.running = True
-        self.rotation = 0
         self.adb.write(["landscape"])
 
         self.screen_update = True
-        screen_frame = pygame.Surface(self.size)
+        self.frame_update = False
+        
+        frame_cache = pygame.Surface(self.size)
+        last_frame = None
         
         while self.running:
             self.events()
@@ -223,8 +234,8 @@ class Main():
                 cmd = msg[0]
                 if cmd == "rot":
                     self.rotation = msg[1]
-                    screen_frame.fill((0, 0, 0))
-            
+                    self.calc_scale()
+                    
             for msg in self.cap.read():
                 cmd = msg[0]
                 if cmd == "head":
@@ -232,27 +243,27 @@ class Main():
 
                 if cmd == "data":
                     data = cStringIO.StringIO(msg[1])
-                    a = pygame.image.load(data)
-                    self.screen_update = True
-                    
-                    landscape = self.rotation in [90, 270]
-                    if landscape:       
-                        a = a.subsurface(pygame.Rect((0,0), self.sizel))
-                        if self.scalel:
-                            a = pygame.transform.smoothscale(a, self.proj)
-                            screen_frame.blit(a, (0, 0))
-                    else:
-                        a = a.subsurface(pygame.Rect((0,0), self.sizep))
-                        if self.scalep:
-                            a = pygame.transform.smoothscale(a, self.proj)
-                            screen_frame.blit(a, (0, 0))
-                    
-                   
+                    last_frame = pygame.image.load(data)
+                    self.frame_update = True
+
             self.menu_loop()
+                    
+            if self.frame_update:
+                self.frame_update = False
+                
+                if last_frame is not None:
+                    if self.landscape:       
+                        a = last_frame.subsurface(pygame.Rect((0,0), self.sizel))
+                    else:
+                        a = last_frame.subsurface(pygame.Rect((0,0), self.sizep))
+    
+                    frame_cache = pygame.transform.smoothscale(a, (self.proj[2], self.proj[3]))
+                self.screen_update = True
                         
             if self.screen_update:
+                self.screen.fill((0, 0, 0))   
                 self.screen_update = False
-                self.screen.blit(screen_frame, (0, 0))
+                self.screen.blit(frame_cache, (self.proj[0], self.proj[1]))   
                 if self.show_menu:
                     self.screen.blit(self.img_menu, (0, 0))
                 if self.show_nav:

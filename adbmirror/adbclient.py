@@ -1,5 +1,3 @@
-import fcntl
-import os
 import time
 
 from subprocess import Popen, PIPE
@@ -43,6 +41,7 @@ class AdbClient(MyThread):
                 if cmd == "end":
                     self.running = False
                     self.rot_auto(True)
+                    time.sleep(1)
                     
                 if cmd == "portrait":
                     self.rot_portrait()
@@ -59,6 +58,8 @@ class AdbClient(MyThread):
                 if cmd == "apps":
                     self.press("KEYCODE_APP_SWITCH")
 
+                if cmd == "power":
+                    self.press("KEYCODE_POWER")
             
         self.app.kill()
 
