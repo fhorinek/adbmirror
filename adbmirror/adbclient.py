@@ -3,6 +3,7 @@ import time
 from subprocess import Popen, PIPE
 from glue import MyThread
 
+KILL_TIMEOUT = 2
 
 class AdbClient(MyThread):
     def __init__(self):
@@ -29,6 +30,12 @@ class AdbClient(MyThread):
     def press(self, key):
         self.cmd("input keyevent %s" % key);
     
+    def wait(self):
+        start = time.time()
+        while time.time() - start < KILL_TIMEOUT:
+            if self.app.poll() is not None:
+                return True
+        return False
         
     def run(self):
         self.running = True
@@ -41,7 +48,8 @@ class AdbClient(MyThread):
                 if cmd == "end":
                     self.running = False
                     self.rot_auto(True)
-                    time.sleep(1)
+                    self.cmd("exit")
+                    
                     
                 if cmd == "portrait":
                     self.rot_portrait()
@@ -61,5 +69,12 @@ class AdbClient(MyThread):
                 if cmd == "power":
                     self.press("KEYCODE_POWER")
             
-        self.app.kill()
+            if self.app.poll() is not None:
+                self.internal_write(["end"])
+                #no need to restore rotation, device disconnected
+                self.running = False
+            
+        #wait to complete the command     
+        if not self.wait():
+            self.app.kill()
 

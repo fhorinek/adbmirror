@@ -129,16 +129,18 @@ class Main():
         y = rect[1] - int((src.get_height() / 2) - (rect[3] / 2))
         dst.blit(src, (x, y)) 
         
+    def exit(self):
+        self.running = False
+        
+        self.cap.write(["end"])
+        self.touch.write(["end"])
+        self.rot.write(["end"])
+        self.adb.write(["end"])        
+        
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
-                
-                self.cap.write(["end"])
-                self.touch.write(["end"])
-                self.rot.write(["end"])
-                self.adb.write(["end"])
-               
+                self.exit()
                
             if hasattr(event, "pos"):
                 ix, iy = event.pos
@@ -245,6 +247,11 @@ class Main():
                     data = cStringIO.StringIO(msg[1])
                     last_frame = pygame.image.load(data)
                     self.frame_update = True
+
+            for msg in self.adb.read():
+                cmd = msg[0]
+                if cmd == "end":
+                    self.exit()
 
             self.menu_loop()
                     

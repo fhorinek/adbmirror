@@ -26,6 +26,8 @@ adbmirror contains all necesery files to run the application, no compilation req
 3. Approve usb debugging for your computer.
 4. Enjoy! 
 
+If you longpress left border, you can change device orientation and display soft buttons
+
 ## How it works
 ```
 start.sh - startup script
@@ -38,8 +40,10 @@ start.sh - startup script
  │ │ └run minicap on device via adb
  │ ├spawn touchclient thread - write to minitouch using socket
  │ │ └run minitouch on device via adb
- │ └spawn rotclient thread - read rotation using stdin
- │   └exec RotationWatcher.adb on device via adb
+ │ ├spawn rotclient thread - read rotation using stdin
+ │ │ └exec RotationWatcher.adb on device via adb
+ │ └spawn adbclient thread - send additional commands like via adb, monitor connection
+ │   └run adb shell 
  └Remove binaries from device
 ```
 ## Build
@@ -50,4 +54,5 @@ You can rebuild openstf binaries using script `./build-binaries.sh`
 If you want to rebuild **RotationWatcher.apk** follow the instructions inside the submodule
 
 ## Common problems
- * Xiaomi phones might want to have additional permission **USB debugging (Security setting)** for 
+ * Xiaomi phones might want to have additional permission **USB debugging (Security setting)** 
+ for touch input
