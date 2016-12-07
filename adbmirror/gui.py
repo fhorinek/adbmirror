@@ -64,7 +64,7 @@ class Main():
         pygame.init()
         pygame.font.init()
 
-        self.screen = pygame.display.set_mode(self.size)
+        self.screen = pygame.display.set_mode(self.size, pygame.FULLSCREEN | pygame.HWSURFACE)
         pygame.display.set_caption("adbmirror")
  
         self.color = (200, 200, 200)
@@ -237,11 +237,13 @@ class Main():
                 if cmd == "rot":
                     self.rotation = msg[1]
                     self.calc_scale()
-                    
-            for msg in self.cap.read():
+
+            #we will process only one frame at the time
+            msgs = self.cap.read()
+            msgl = len(msgs)
+            if msgl:
+                msg = msgs[msgl - 1]
                 cmd = msg[0]
-                if cmd == "head":
-                    self.banner = msg[1]
 
                 if cmd == "data":
                     data = cStringIO.StringIO(msg[1])
@@ -263,8 +265,13 @@ class Main():
                         a = last_frame.subsurface(pygame.Rect((0,0), self.sizel))
                     else:
                         a = last_frame.subsurface(pygame.Rect((0,0), self.sizep))
-    
-                    frame_cache = pygame.transform.smoothscale(a, (self.proj[2], self.proj[3]))
+
+                    aw, ah = a.get_size()
+                    if aw != self.proj[2] or ah != self.proj[3]:
+                    	frame_cache = pygame.transform.smoothscale(a, (self.proj[2], self.proj[3]))
+                    else:
+                        frame_cache = a.copy()
+
                 self.screen_update = True
                         
             if self.screen_update:

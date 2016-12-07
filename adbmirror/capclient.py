@@ -20,7 +20,7 @@ class CapClient(MyThread):
         
         disp_max = max(parent.size)
         dev_max = max(parent.orig)
-        args = "-P %ux%u@%ux%u/0" % (dev_max, dev_max, disp_max, disp_max)
+        args = "-P %ux%u@%ux%u/0 -S -Q 80" % (dev_max, dev_max, disp_max, disp_max)
         cmd = ["adb", "shell", "LD_LIBRARY_PATH=%s %s/minicap %s" % (parent.path, parent.path, args)]
         self.server = Popen(cmd)
       
@@ -47,7 +47,7 @@ class CapClient(MyThread):
                     self.running = False
         
             try:
-                data = self.socket.recv(1024)
+                data = self.socket.recv(1024 * 1024)
                 self.data += data
             except socket.error, e:
                 err = e.args[0]
@@ -58,14 +58,12 @@ class CapClient(MyThread):
                 banner_data = self.cut_data(BANNER_SIZE)
                 self.banner = struct.unpack("<BBIIIIIBB", banner_data)
                 self.state = HEAD
-                self.internal_write(["head", self.banner])
                 print "Banner"
                 print self.banner
                 
             if self.state == HEAD and len(self.data) >= HEAD_SIZE:
                 head_data = self.cut_data(HEAD_SIZE)
                 self.data_size, = struct.unpack("<I", head_data)
-#                 print self.data_size
                 self.state = DATA
 
             if self.state == DATA and len(self.data) >= self.data_size:
