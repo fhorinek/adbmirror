@@ -68,7 +68,7 @@ adb forward tcp:1313 localabstract:minicap
 adb forward tcp:1111 localabstract:minitouch
 
 echo " * Staring GUI"
-python gui.py $disp_size $dev_size $dev_dir
+python -m cProfile -o out.prof -s time gui.py $disp_size $dev_size $dev_dir
 
 echo " * Cleaning up"
 adb shell rm -rf $tmp_dir
