@@ -70,9 +70,10 @@ class Main():
         self.color = (200, 200, 200)
         
         font = pygame.font.Font("res/fontawesome.ttf", 70)
-        img_portrait = font.render(u'\uf10b', True, self.color)
-        img_landscape = pygame.transform.rotate(img_portrait, 90)
-        img_bars = font.render(u'\uf0c9', True, self.color)
+        self.img_close = font.render(u'\uf00d', True, self.color)
+        self.img_portrait = font.render(u'\uf10b', True, self.color)
+        self.img_landscape = pygame.transform.rotate(self.img_portrait, 90)
+        self.img_bars = font.render(u'\uf0c9', True, self.color)
         
         font = pygame.font.Font("res/fontawesome.ttf", 30)
         img_back = font.render(u'\uf053', True, self.color)
@@ -81,11 +82,7 @@ class Main():
         
         self.menu_w = int(self.size[0] * MENU_WIDTH / 100.0)
         self.menu_h = int(self.size[1] / 3)
-        self.img_menu = pygame.Surface((self.menu_w, self.size[1]))
-        
-        self.blit_center(self.img_menu, img_portrait, (0, 0, self.menu_w, self.menu_h))
-        self.blit_center(self.img_menu, img_landscape, (0, self.menu_h, self.menu_w, self.menu_h))
-        self.blit_center(self.img_menu, img_bars, (0, self.menu_h * 2, self.menu_w, self.menu_h))
+        self.update_menu()
         
         self.nav_w = int(self.size[0] * NAV_WIDTH / 100.0)
         
@@ -93,6 +90,17 @@ class Main():
         self.blit_center(self.img_nav, img_box, (0, 0, self.nav_w, self.menu_h))
         self.blit_center(self.img_nav, img_home, (0, self.menu_h, self.nav_w, self.menu_h))
         self.blit_center(self.img_nav, img_back, (0, self.menu_h * 2, self.nav_w, self.menu_h))
+
+    def update_menu(self):
+        self.img_menu = pygame.Surface((self.menu_w, self.size[1]))
+        
+        self.blit_center(self.img_menu, self.img_close, (0, 0, self.menu_w, self.menu_h))
+        if self.landscape:
+            self.blit_center(self.img_menu, self.img_portrait, (0, self.menu_h, self.menu_w, self.menu_h))
+        else:
+            self.blit_center(self.img_menu, self.img_landscape, (0, self.menu_h, self.menu_w, self.menu_h))
+        self.blit_center(self.img_menu, self.img_bars, (0, self.menu_h * 2, self.menu_w, self.menu_h))
+
 
     def calc_scale(self):
         self.landscape = self.rotation in [90, 270]
@@ -199,14 +207,16 @@ class Main():
 
     def menu_action(self, but):
         if but == 0:
-            self.adb.write(["portrait"])
+            self.exit()
         if but == 1:
-            self.adb.write(["landscape"])
+            if self.landscape:
+                self.adb.write(["portrait"])
+            else:
+                self.adb.write(["landscape"])
         if but == 2:
             self.show_nav = not self.show_nav
             self.calc_scale()
 
-            
         self.show_menu = False
           
     def menu_loop(self):
@@ -237,6 +247,7 @@ class Main():
                 if cmd == "rot":
                     self.rotation = msg[1]
                     self.calc_scale()
+                    self.update_menu()
 
             #we will process only one frame at the time
             msgs = self.cap.read()
@@ -268,7 +279,7 @@ class Main():
 
                     aw, ah = a.get_size()
                     if aw != self.proj[2] or ah != self.proj[3]:
-                    	frame_cache = pygame.transform.smoothscale(a, (self.proj[2], self.proj[3]))
+                        frame_cache = pygame.transform.smoothscale(a, (self.proj[2], self.proj[3]))
                     else:
                         frame_cache = a.copy()
 

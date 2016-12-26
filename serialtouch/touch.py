@@ -1,7 +1,7 @@
 import serial
 import Xlib.display
 from subprocess import Popen, PIPE
-
+        
 
 class SerialTouch():
     def __init__(self):
