@@ -19,9 +19,9 @@ class SerialTouch():
         self.min_y = 63480
         self.max_y = 65402
         
-        self.simulate = True
+        self.simulate = False
         if not self.simulate:
-            port = "/dev/ttyUSB0"
+            port = "/dev/ttyS3"
             speed = 38400
             self.serial = serial.Serial(port, speed, timeout=0)
         

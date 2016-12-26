@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #set size of your output display
-disp_size=768x424
+disp_size=767x418
 
 if ! which adb > /dev/null; then
 	echo "Error: adb not found in path!"
