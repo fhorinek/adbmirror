@@ -8,8 +8,12 @@ It can be used with any linux PC or SBC (RaspberryPi, BabananaPi, *Pi, ...)
 I am using binaries from [openstf](https://github.com/openstf)
 to stream screen and to emulate touch. Great project!
 
-## Demo
+## Video
 
+car implementation
+https://www.youtube.com/watch?v=P7ERXQuvFbE
+
+demo on desktop
 https://www.youtube.com/watch?v=tdfUAGuk7k0
 
 ## Running
