@@ -71,5 +71,5 @@ echo " * Staring GUI"
 python gui.py $disp_size $dev_size $dev_dir
 
 echo " * Cleaning up"
-adb shell rm -rf $tmp_dir
+adb shell rm -rf $dev_dir
 
