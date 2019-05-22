@@ -4,8 +4,8 @@
 disp_size=767x418
 
 if ! which adb > /dev/null; then
-	echo "Error: adb not found in path!"
-	exit
+    echo "Error: adb not found in path!"
+    exit
 fi
 
 if ! ps aux | grep adb | grep fork-server > /dev/null; then
@@ -26,9 +26,9 @@ dev_size=$(adb shell wm size | cut -f3 -d' ')
 
 # PIE is only supported since SDK 16
 if (($sdk >= 16)); then
-  pie=
+    pie=
 else
-  pie=-nopie
+    pie=-nopie
 fi
 
 echo " * Uploading binaries"
@@ -45,9 +45,9 @@ cp bin/minicap/$abi/minicap$pie $tmp_dir
 
 #minicap-shared
 if [ -e bin/minicap-shared/android-$rel/$abi/minicap.so ]; then
-  cp bin/minicap-shared/android-$rel/$abi/minicap.so $tmp_dir
+    cp bin/minicap-shared/android-$rel/$abi/minicap.so $tmp_dir
 else
-  cp bin/minicap-shared/android-$sdk/$abi/minicap.so $tmp_dir
+    cp bin/minicap-shared/android-$sdk/$abi/minicap.so $tmp_dir
 fi
 
 #minitouch
