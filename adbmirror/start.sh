@@ -1,7 +1,58 @@
 #!/usr/bin/env bash
 
-#set size of your output display
-disp_size=767x418
+FULLSCREEN=1
+QUALITY=80
+SIZE=767x418
+
+print_usage() {
+    echo -e "USAGE: ${0} [OPTIONS]"
+    echo -e ""
+    echo -e "OPTIONS:"
+    echo -e "-h | --help"
+    echo -e "\tdisplays this help and exit"
+    echo -e ""
+    echo -e "--no-fullscreen"
+    echo -e "\tdisable starting the pygame window in fullscreen mode"
+    echo -e ""
+    echo -e "--quality <0-100>"
+    echo -e "\twill set the quality of the streamed picture, 100 being the best"
+    echo -e "\tdefaults to ${QUALITY}"
+    echo -e ""
+    echo -e "--size <WIDTHxHEIGHT>"
+    echo -e "\tthe size of the pygame window"
+    echo -e "\tdefaults to ${SIZE}"
+    echo -e ""
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            print_usage
+            exit 0
+            ;;
+
+        --no-fullscreen)
+            FULLSCREEN=0
+            shift
+            ;;
+
+        --quality)
+            QUALITY="$2"
+            shift
+            shift
+            ;;
+
+        --size|--resolution)
+            SIZE="$2"
+            shift
+            shift
+            ;;
+
+        *)
+            shift
+            ;;
+    esac
+done
 
 if ! which adb > /dev/null; then
     echo "Error: adb not found in path!"
@@ -68,7 +119,7 @@ adb forward tcp:1313 localabstract:minicap
 adb forward tcp:1111 localabstract:minitouch
 
 echo " * Staring GUI"
-python gui.py $disp_size $dev_size $dev_dir
+python gui.py $SIZE $dev_size $dev_dir $QUALITY $FULLSCREEN
 
 echo " * Cleaning up"
 adb shell rm -rf $dev_dir

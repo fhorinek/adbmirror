@@ -19,11 +19,13 @@ DOUBLECLICK_TIME = 0.2
 
 class Main():
     def __init__(self):
-        assert len(sys.argv) == 4
+        assert len(sys.argv) == 6
         self.size = map(int, sys.argv[1].split("x"))
         orig = map(int, sys.argv[2].split("x"))
         self.orig = orig[1], orig[0]
         self.path = sys.argv[3]
+        self.quality = int(sys.argv[4])
+        self.fullscreen = sys.argv[5]
 
         self.scalel = True
         self.scalep = False
@@ -64,7 +66,11 @@ class Main():
         pygame.init()
         pygame.font.init()
 
-        self.screen = pygame.display.set_mode(self.size, pygame.FULLSCREEN | pygame.HWSURFACE)
+        if int(self.fullscreen):
+            self.screen = pygame.display.set_mode(self.size, pygame.FULLSCREEN | pygame.HWSURFACE)
+        else:
+            self.screen = pygame.display.set_mode(self.size, pygame.HWSURFACE)
+
         pygame.display.set_caption("adbmirror")
 
         self.color = (200, 200, 200)
@@ -231,7 +237,10 @@ class Main():
 
     def run(self):
         self.running = True
-        self.adb.write(["landscape"])
+        if int(self.fullscreen):
+            self.adb.write(["landscape"])
+        else:
+            self.adb.write(["portrait"])
 
         self.screen_update = True
         self.frame_update = False

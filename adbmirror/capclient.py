@@ -20,7 +20,7 @@ class CapClient(MyThread):
 
         disp_max = max(parent.size)
         dev_max = max(parent.orig)
-        args = "-P %ux%u@%ux%u/0 -S -Q 80" % (dev_max, dev_max, disp_max, disp_max)
+        args = "-P %ux%u@%ux%u/0 -S -Q %u" % (dev_max, dev_max, disp_max, disp_max, parent.quality)
         cmd = ["adb", "shell", "LD_LIBRARY_PATH=%s %s/minicap %s" % (parent.path, parent.path, args)]
         self.server = Popen(cmd)
 
