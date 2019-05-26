@@ -19,31 +19,33 @@ DOUBLECLICK_TIME = 0.2
 
 class Main():
     def __init__(self):
-        assert len(sys.argv) == 4
+        assert len(sys.argv) == 6
         self.size = map(int, sys.argv[1].split("x"))
         orig = map(int, sys.argv[2].split("x"))
         self.orig = orig[1], orig[0]
         self.path = sys.argv[3]
-        
+        self.quality = int(sys.argv[4])
+        self.fullscreen = sys.argv[5]
+
         self.scalel = True
         self.scalep = False
-        
+
         self.cap = CapClient(self)
         self.cap.start()
-        
+
         self.touch = TouchClient(self)
         self.touch.start()
-        
+
         self.rot = RotationClient()
         self.rot.start()
-        
+
         self.adb = AdbClient()
         self.adb.start()
-        
+
         self.mouse_down = False
         self.mouse_time = 0
         self.mouse_inmenu = False
-        
+
         self.show_menu = False
         self.show_menu_time = 0
 
@@ -64,28 +66,32 @@ class Main():
         pygame.init()
         pygame.font.init()
 
-        self.screen = pygame.display.set_mode(self.size, pygame.FULLSCREEN | pygame.HWSURFACE)
+        if int(self.fullscreen):
+            self.screen = pygame.display.set_mode(self.size, pygame.FULLSCREEN | pygame.HWSURFACE)
+        else:
+            self.screen = pygame.display.set_mode(self.size, pygame.HWSURFACE)
+
         pygame.display.set_caption("adbmirror")
- 
+
         self.color = (200, 200, 200)
-        
+
         font = pygame.font.Font("res/fontawesome.ttf", 70)
         self.img_close = font.render(u'\uf00d', True, self.color)
         self.img_portrait = font.render(u'\uf10b', True, self.color)
         self.img_landscape = pygame.transform.rotate(self.img_portrait, 90)
         self.img_bars = font.render(u'\uf0c9', True, self.color)
-        
+
         font = pygame.font.Font("res/fontawesome.ttf", 30)
         img_back = font.render(u'\uf053', True, self.color)
         img_home = font.render(u'\uf015', True, self.color)
         img_box = font.render(u'\uf009', True, self.color)
-        
+
         self.menu_w = int(self.size[0] * MENU_WIDTH / 100.0)
         self.menu_h = int(self.size[1] / 3)
         self.update_menu()
-        
+
         self.nav_w = int(self.size[0] * NAV_WIDTH / 100.0)
-        
+
         self.img_nav = pygame.Surface((self.nav_w, self.size[1]))
         self.blit_center(self.img_nav, img_box, (0, 0, self.nav_w, self.menu_h))
         self.blit_center(self.img_nav, img_home, (0, self.menu_h, self.nav_w, self.menu_h))
@@ -93,7 +99,7 @@ class Main():
 
     def update_menu(self):
         self.img_menu = pygame.Surface((self.menu_w, self.size[1]))
-        
+
         self.blit_center(self.img_menu, self.img_close, (0, 0, self.menu_w, self.menu_h))
         if self.landscape:
             self.blit_center(self.img_menu, self.img_portrait, (0, self.menu_h, self.menu_w, self.menu_h))
@@ -104,15 +110,15 @@ class Main():
 
     def calc_scale(self):
         self.landscape = self.rotation in [90, 270]
-        
+
         if self.show_nav:
-            max_w = self.size[0] - self.nav_w      
-        else:            
+            max_w = self.size[0] - self.nav_w
+        else:
             max_w = self.size[0]
- 
+
         if self.landscape:
             x = 0
-            w = max_w 
+            w = max_w
             if self.scalel:
                 h = self.size[1]
                 y = 0
@@ -128,32 +134,32 @@ class Main():
             else:
                 w = h / self.ratio
                 x = (self.size[0] - w) / 2
-                
-        self.proj = map(int, [x, y, w, h]) 
+
+        self.proj = map(int, [x, y, w, h])
         self.frame_update = True
-        
+
     def blit_center(self, dst, src, rect):
         x = rect[0] - int((src.get_width() / 2) - (rect[2] / 2))
         y = rect[1] - int((src.get_height() / 2) - (rect[3] / 2))
-        dst.blit(src, (x, y)) 
-        
+        dst.blit(src, (x, y))
+
     def exit(self):
         self.running = False
-        
+
         self.cap.write(["end"])
         self.touch.write(["end"])
         self.rot.write(["end"])
-        self.adb.write(["end"])        
-        
+        self.adb.write(["end"])
+
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.exit()
-               
+
             if hasattr(event, "pos"):
                 ix, iy = event.pos
                 self.mouse_inmenu = ix <= self.size[1] * MENU_BORDER / 100.0
-                
+
                 fx = min(max(0, (ix - self.proj[0]) / float(self.proj[2])), 1)
                 fy = min(max(0, (iy - self.proj[1]) / float(self.proj[3])), 1)
 
@@ -164,19 +170,19 @@ class Main():
                 if self.rotation == 90:
                     x = 1.0 - fy
                     y = fx
-                    
+
                 if self.rotation == 180:
                     x = 1.0 - fx
-                    y = 1.0 - fy   
-                
+                    y = 1.0 - fy
+
                 if self.rotation == 270:
                     x = fy
-                    y = 1.0 - fx                                 
-            
+                    y = 1.0 - fx
+
             if hasattr(event, "button"):
                 if event.button is not 1:
                     continue
-                  
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if ix < self.menu_w and self.show_menu:
                         self.menu_action(iy / (self.size[1] / 3))
@@ -186,15 +192,15 @@ class Main():
                         self.touch.write(["down", x, y])
                         self.mouse_down = True
                         self.mouse_time = time()
-                
+
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.touch.write(["up"])
                     self.mouse_down = False
-   
+
             if event.type == pygame.MOUSEMOTION:
                 if self.mouse_down:
                     self.touch.write(["move", x, y])
-                    
+
 
     def nav_action(self, but):
         if but == 0:
@@ -218,7 +224,7 @@ class Main():
             self.calc_scale()
 
         self.show_menu = False
-          
+
     def menu_loop(self):
         if self.mouse_down and time() - self.mouse_time > MENU_TAP and self.mouse_inmenu:
             self.show_menu = True
@@ -228,20 +234,23 @@ class Main():
         if self.show_menu and time() - self.show_menu_time > MENU_TIMEOUT:
             self.show_menu = False
             self.screen_update = True
-    
+
     def run(self):
         self.running = True
-        self.adb.write(["landscape"])
+        if int(self.fullscreen):
+            self.adb.write(["landscape"])
+        else:
+            self.adb.write(["portrait"])
 
         self.screen_update = True
         self.frame_update = False
-        
+
         frame_cache = pygame.Surface(self.size)
         last_frame = None
-        
+
         while self.running:
             self.events()
- 
+
             for msg in self.rot.read():
                 cmd = msg[0]
                 if cmd == "rot":
@@ -267,12 +276,12 @@ class Main():
                     self.exit()
 
             self.menu_loop()
-                    
+
             if self.frame_update:
                 self.frame_update = False
-                
+
                 if last_frame is not None:
-                    if self.landscape:       
+                    if self.landscape:
                         a = last_frame.subsurface(pygame.Rect((0,0), self.sizel))
                     else:
                         a = last_frame.subsurface(pygame.Rect((0,0), self.sizep))
@@ -284,18 +293,17 @@ class Main():
                         frame_cache = a.copy()
 
                 self.screen_update = True
-                        
+
             if self.screen_update:
-                self.screen.fill((0, 0, 0))   
+                self.screen.fill((0, 0, 0))
                 self.screen_update = False
-                self.screen.blit(frame_cache, (self.proj[0], self.proj[1]))   
+                self.screen.blit(frame_cache, (self.proj[0], self.proj[1]))
                 if self.show_menu:
                     self.screen.blit(self.img_menu, (0, 0))
                 if self.show_nav:
                     self.screen.blit(self.img_nav, (self.size[0] - self.nav_w, 0))
                 pygame.display.update()
-                        
 
-             
+
 a = Main()
 a.run()
